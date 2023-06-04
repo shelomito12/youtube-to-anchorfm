@@ -1,6 +1,12 @@
 node_modules
+package-lock.json
 *.mp4
 *.m4a
 *.webm
+podsync_ids.txt
+new_ids.txt
+anchorfm_ids.txt
+manual_entries.txt
+cron.log
+change_id.sh
 dist/episode*
-.env
