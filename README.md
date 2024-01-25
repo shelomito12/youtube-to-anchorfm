@@ -23,6 +23,7 @@ Table of Contents
       * [Thumbnail Mode](#thumbnail-mode)
       * [Add YouTube URL to Podcast Description](#add-youtube-url-to-podcast-description)
       * [Set a publish date for the episode](#set-a-publish-date-for-the-episode)
+  * [Multiple shows per repository](#multiple-shows-per-repository)
    * [How can I setup for development and use the script locally?](#how-can-i-setup-for-development-and-use-the-script-locally)
    * [How to upload a YouTube playlist to Anchor.fm using this script?](#how-to-upload-a-youtube-playlist-to-anchorfm-using-this-script)
 * [Contributors](#contributors)
@@ -35,7 +36,7 @@ The action will start every time you push a change on the `episode.json` file. I
 
 The action uses a docker image built over Ubuntu. It takes some time to setup the environment before running the script.
 
-**NOTE**: For the script to run successfully its necessary for there to be at least one episode manually published on Anchor.fm, as the steps to publish on a brand new Anchor.fm account are different, and the automation will break.
+**NOTE**: For the script to run successfully it is necessary for there to be at least one episode manually published on Anchor.fm, as the steps to publish on a brand new Anchor.fm account are different, and the automation will break.
 
 ## How can I run this as a GitHub action?
 
@@ -140,6 +141,55 @@ env:
   SET_PUBLISH_DATE: true
 ```
 
+## Multiple shows per repository
+
+It is possible to use a single repository to maintain several shows.
+
+You'll need an episode config per show.
+
+As an example, suppose you have two shows, you called "Great News" and another "Sad News".
+
+You repository will look like this:
+
+```
+.github/
+├─ workflows/
+│  ├─ great-news.yaml
+│  ├─ sad-news.yaml
+great-news.json
+sad-news.json
+```
+
+In `great-news.json` and `sad-news.json`, you have:
+```json
+{
+  "id": "episode_video_id"
+}
+```
+
+In `great-news.yaml` and `sad-news.yaml`:
+```yaml
+name: 'Great News Upload Action'
+on:
+  push:
+    paths: 
+    ## only updates to this file trigger this action
+      - great-news.json   # or sad-news.json
+jobs:
+  upload_episode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upload Episode from YouTube To Anchor.Fm
+        uses: Schrodinger-Hat/youtube-to-anchorfm@v2.0.0
+        env:
+          ANCHOR_EMAIL: ${{ secrets.ANCHOR_EMAIL_GREATNEWS}}  # OR secrets.ANCHOR_EMAIL_SADNEWS 
+          ANCHOR_PASSWORD: ${{ secrets.ANCHOR_PASSWORD_GREATNEWS }}  # OR secrets.ANCHOR_PASSWORD_SADNEWS
+          EPISODE_PATH: /github/workspace/
+          EPISODE_FILE: great-news.json
+          # (…) Other configs as needed
+```
+
 ## How can I setup for development and use the script locally?
 
 To run the script locally, you need `python3` and `ffmpeg` to be available in `PATH` which are used by the npm dependency `youtube-dl-exec`.
@@ -168,7 +218,7 @@ Finally, you can do `npm start` to execute the script.
 
 Currently, you can process a full playlist (one way only) with
 
-```
+```bash
 curl https://scc-youtube.vercel.app/playlist-items/PLoXdlLuaGN8ShASxcE2A4YuSto3AblDmX \
     | jq '.[].contentDetails.videoId' -r \
     | tac \
